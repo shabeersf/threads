@@ -1,6 +1,6 @@
 import * as z from 'zod'
 
-export const threadValidation = z.object({
+export const ThreadValidation = z.object({
     thread: z.string().min(3, { message: 'Minimum of 3 characters' }),
     accountId: z.string()
 })

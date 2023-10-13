@@ -1,83 +1,82 @@
-"use client"
+"use client";
 
+import * as z from "zod";
+import { useForm } from "react-hook-form";
+import { useOrganization } from "@clerk/nextjs";
 import { zodResolver } from "@hookform/resolvers/zod";
-import * as z from "zod"
+import { usePathname, useRouter } from "next/navigation";
+
 import {
-  Form, FormControl,
+  Form,
+  FormControl,
   FormField,
   FormItem,
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import { useForm } from "react-hook-form";
+import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
 
-import { Button } from "@/components/ui/button"
-import { usePathname, useRouter } from "next/navigation";
-import { threadValidation } from "@/lib/validations/thread";
-import { Textarea } from "../ui/textarea";
 import { createThread } from "@/lib/actions/thread.actions";
-
+import { ThreadValidation } from "@/lib/validations/thread";
 
 interface Props {
-  user: {
-    id: string,
-    objectId: string,
-    username: string,
-    name: string,
-    bio: string,
-    image: string,
-
-  };
-  btnTitle: string
-
+  userId: string;
 }
 
+function PostThread({ userId }: Props) {
+  const router = useRouter();
+  const pathname = usePathname();
 
-const PostThread = ({ userId }: { userId: string }) => {
+  const { organization } = useOrganization();
 
-
-  const router = useRouter()
-  const pathname = usePathname()
-
-  const form = useForm({
-    resolver: zodResolver(threadValidation),
+  const form = useForm<z.infer<typeof ThreadValidation>>({
+    resolver: zodResolver(ThreadValidation),
     defaultValues: {
-      thread: '',
+      thread: "",
       accountId: userId,
-    }
-  })
-  const onSubmit = async (values: z.infer<typeof threadValidation>) =>{
-    await createThread({
-      text:values.thread,
-      author :userId, 
-      communityId:null, 
-      path:pathname
-    })
+    },
+  });
 
-  }
+  const onSubmit = async (values: z.infer<typeof ThreadValidation>) => {
+    await createThread({
+      text: values.thread,
+      author: userId,
+      communityId: organization ? organization.id : null,
+      path: pathname,
+    });
+
+    router.push("/");
+  };
+
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="mt-10 flex flex-col justify-start gap-10">
-      <FormField
-                    control={form.control}
-                    name="thread"
-                    render={({ field }) => (
-                        <FormItem className="flex flex-col gap-3 w-full">
-                            <FormLabel className=" text-base-semibold text-light-2  ">
-                                Content
-                            </FormLabel>
-                            <FormControl className=" border border-dark-4 bg-dark-3 text-light-1 no-focus" >
-                                <Textarea placeholder="Content"  rows={15} {...field} />
-                            </FormControl>
+      <form
+        className='mt-10 flex flex-col justify-start gap-10'
+        onSubmit={form.handleSubmit(onSubmit)}
+      >
+        <FormField
+          control={form.control}
+          name='thread'
+          render={({ field }) => (
+            <FormItem className='flex w-full flex-col gap-3'>
+              <FormLabel className='text-base-semibold text-light-2'>
+                Content
+              </FormLabel>
+              <FormControl className='no-focus border border-dark-4 bg-dark-3 text-light-1'>
+                <Textarea rows={15} {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
 
-                            <FormMessage />
-                        </FormItem>
-                    )}
-                />
-                <Button type="submit" className=" bg-primary-500" >Post Thread</Button>
+        <Button type='submit' className='bg-primary-500'>
+          Post Thread
+        </Button>
       </form>
     </Form>
-  )
+  );
 }
 
-export default PostThread
+export default PostThread;
